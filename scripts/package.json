@@ -1,0 +1,15 @@
+{
+  "name": "aig-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test:cctp": "ts-node test-cctp-domain7.ts"
+  },
+  "dependencies": {
+    "viem": "^2.47.2"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
