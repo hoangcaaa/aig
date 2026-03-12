@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+frontend/node_modules/
+scripts/node_modules/
+
+# Testing
+coverage/
+
+# Production
+.next/
+out/
+dist/
+build/
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.*.local
+*.log
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+Thumbs.db
