@@ -118,9 +118,11 @@ export async function receiveMessage(
   message: string,
   attestation: string
 ): Promise<{ txHash: string }> {
-  const account = privateKeyToAccount(
-    process.env.AIG_ADMIN_WALLET_PRIVATE_KEY as `0x${string}`
-  );
+  const pk = process.env.AIG_ADMIN_WALLET_PRIVATE_KEY;
+  if (!pk || !pk.startsWith("0x") || pk.length !== 66) {
+    throw new Error("receiveMessage: AIG_ADMIN_WALLET_PRIVATE_KEY missing or malformed");
+  }
+  const account = privateKeyToAccount(pk as `0x${string}`);
   const arcChain = getArcChain();
 
   const walletClient = createWalletClient({

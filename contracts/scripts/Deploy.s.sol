@@ -19,7 +19,14 @@ contract DeployScript is Script {
         address wbnb    = vm.envAddress("WBNB_ADDRESS_BSC_TESTNET");
         address usdc    = vm.envAddress("USDC_ADDRESS_BSC_TESTNET");
         address pancake = vm.envAddress("PANCAKESWAP_V3_ROUTER_BSC");
-        address cctp    = vm.envAddress("CCTP_TOKEN_MESSENGER_BSC"); // or address(0) for ADMIN_RELAY
+        // CCTP messenger: pass address(0) if ADMIN_RELAY mode
+        address cctp;
+        string memory bridgeMode = vm.envString("BRIDGE_MODE");
+        if (keccak256(bytes(bridgeMode)) == keccak256(bytes("ADMIN_RELAY"))) {
+            cctp = address(0);
+        } else {
+            cctp = vm.envAddress("CCTP_TOKEN_MESSENGER_BSC");
+        }
         address revenue = vm.envAddress("AIG_REVENUE_POOL_ADDRESS");
 
         vm.startBroadcast();

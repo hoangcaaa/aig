@@ -24,8 +24,25 @@ import { awardPoints } from "@/lib/points";
 
 const BRIDGE_MODE = (process.env.BRIDGE_MODE as BridgeMode) ?? "CCTP";
 
+const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
+const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
+
 export async function POST(req: NextRequest) {
   const { sessionId, swapTxHash, merchantWallet, targetUSDC } = await req.json();
+
+  // Input validation — these flow into blockchain calls and DB queries
+  if (!sessionId || typeof sessionId !== "string") {
+    return Response.json({ error: "sessionId required" }, { status: 400 });
+  }
+  if (!TX_HASH_RE.test(swapTxHash)) {
+    return Response.json({ error: "invalid swapTxHash format" }, { status: 400 });
+  }
+  if (!ADDR_RE.test(merchantWallet)) {
+    return Response.json({ error: "invalid merchantWallet address" }, { status: 400 });
+  }
+  if (typeof targetUSDC !== "number" || targetUSDC <= 0) {
+    return Response.json({ error: "targetUSDC must be positive number" }, { status: 400 });
+  }
 
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();

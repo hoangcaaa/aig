@@ -126,48 +126,35 @@ export async function adminRelay(
 ): Promise<{ txHash: string }> {
   const supabase = getSupabaseClient();
 
-  // ── IDEMPOTENCY GUARD ──────────────────────────────────────────────────
-  const { data: session, error } = await supabase
-    .from("payment_sessions")
-    .select("status, bridge_mode")
-    .eq("session_id", sessionId)
-    .single();
-
-  if (error) {
-    throw new Error(`adminRelay: Supabase lookup failed — ${error.message}`);
-  }
-
-  if (!session) {
-    throw new Error(`adminRelay: session ${sessionId} not found in database`);
-  }
-
-  if (session.status !== "PENDING") {
-    // Session already processed — abort silently to prevent double-spend
-    console.warn(
-      `adminRelay: session ${sessionId} is ${session.status} — aborting (idempotency guard)`
-    );
-    return { txHash: "" }; // no-op, not an error
-  }
-  // ── END IDEMPOTENCY GUARD ──────────────────────────────────────────────
-
-  // Atomically mark session as SWAP_EXECUTING before sending tx
-  const { error: updateError } = await supabase
+  // ── ATOMIC IDEMPOTENCY GUARD ───────────────────────────────────────────
+  // Single atomic UPDATE with status=PENDING condition. If 0 rows affected,
+  // another caller already claimed this session — abort without transfer.
+  const { data: updated, error: updateError } = await supabase
     .from("payment_sessions")
     .update({ status: "SWAP_EXECUTING", bridge_mode: "ADMIN_RELAY" })
     .eq("session_id", sessionId)
-    .eq("status", "PENDING"); // double-check — only update if still PENDING
+    .eq("status", "PENDING")
+    .select("session_id");
 
   if (updateError) {
     throw new Error(`adminRelay: failed to lock session — ${updateError.message}`);
   }
 
+  if (!updated || updated.length === 0) {
+    console.warn(`adminRelay: session ${sessionId} not PENDING — aborting (idempotency guard)`);
+    return { txHash: "" };
+  }
+  // ── END IDEMPOTENCY GUARD ─────────────────────────────────────────────
+
   // Pre-flight: warn if admin wallet balance is low
   await verifyAdminWalletBalance();
 
   // Execute ERC-20 transfer via admin wallet on Arc Testnet
-  const account = privateKeyToAccount(
-    process.env.AIG_ADMIN_WALLET_PRIVATE_KEY as `0x${string}`
-  );
+  const pk = process.env.AIG_ADMIN_WALLET_PRIVATE_KEY;
+  if (!pk || !pk.startsWith("0x") || pk.length !== 66) {
+    throw new Error("adminRelay: AIG_ADMIN_WALLET_PRIVATE_KEY missing or malformed");
+  }
+  const account = privateKeyToAccount(pk as `0x${string}`);
   const arcChain = getArcChain();
 
   const walletClient = createWalletClient({
