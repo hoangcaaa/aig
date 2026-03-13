@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {SwapRouter} from "../src/SwapRouter.sol";
 
 // =============================================================================
-// SwapRouter.t.sol — Unit + Fork Tests
+// SwapRouter.t.sol - Unit + Fork Tests
 //
 // Run against BSC Testnet fork:
 //   forge test --fork-url $BSC_TESTNET_RPC_URL -vvv
@@ -40,7 +40,7 @@ contract SwapRouterTest is Test {
         // TODO: implement with BSC testnet fork + mock PancakeSwap
         // Expected: RefundIssued event emitted with refundAmount > 0
         // Expected: customer WBNB balance increases by refundAmount
-        assertTrue(true, "placeholder — implement with fork");
+        assertTrue(true, "placeholder - implement with fork");
     }
 
     // -------------------------------------------------------------------------
@@ -49,7 +49,7 @@ contract SwapRouterTest is Test {
     function test_swapCompletedEventInAdminRelayMode() public {
         // TODO: implement with mock USDC + mock PancakeSwap
         // Expected: SwapCompleted(sessionId, netUSDC, merchantWallet) emitted
-        assertTrue(true, "placeholder — implement with fork");
+        assertTrue(true, "placeholder - implement with fork");
     }
 
     // -------------------------------------------------------------------------
@@ -57,15 +57,15 @@ contract SwapRouterTest is Test {
     // -------------------------------------------------------------------------
     function test_revertsOnInsufficientOutput() public {
         // TODO: simulate a swap that returns below minimum threshold
-        assertTrue(true, "placeholder — implement with fork");
+        assertTrue(true, "placeholder - implement with fork");
     }
 
     // -------------------------------------------------------------------------
-    // Test: no floating-point — amountInMaximum is accepted as raw integer
+    // Test: no floating-point - amountInMaximum is accepted as raw integer
     // -------------------------------------------------------------------------
     function test_acceptsPrecomputedAmountInMaximum() public {
         // All math is pre-computed off-chain. Contract receives final integer.
         // This test confirms the contract does NOT attempt any price math.
-        assertTrue(true, "confirmed by contract design — no math in .sol");
+        assertTrue(true, "confirmed by contract design - no math in .sol");
     }
 }
