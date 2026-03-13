@@ -14,11 +14,23 @@ out/
 dist/
 build/
 
-# Misc
-.DS_Store
+# Environment & secrets
 .env
 .env.local
 .env.*.local
+*.pem
+*.key
+
+# Claude Code (local tooling — not project code)
+.claude/
+
+# Foundry
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+
+# Misc
+.DS_Store
 *.log
 *.swp
 *.swo
