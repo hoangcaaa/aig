@@ -1,7 +1,7 @@
 ---
 title: "AIG Phase 1 MVP Implementation"
 description: "Complete all TypeScript TODOs, split API endpoints, build UI, deploy SwapRouter.sol to BSC Testnet"
-status: pending
+status: complete
 priority: P0
 effort: 24h
 issue: ""
@@ -21,11 +21,11 @@ Critical path: Foundation → ADMIN_RELAY path → CCTP path (conditional) → U
 
 | # | Phase | Status | Effort | Link |
 |---|-------|--------|--------|------|
-| 1 | Foundation (smoke test, fetchSpotPrice, updateSession, route refactor) | Pending | 5h | [phase-01](./phase-01-foundation.md) |
-| 2 | ADMIN_RELAY Path (pollSwapCompleted, adminRelay transfer, balance check) | Pending | 4h | [phase-02-admin-relay.md](./phase-02-admin-relay.md) |
-| 3 | CCTP Path (extractMessageHash, receiveMessage, extractRawMessage) | Pending | 4h | [phase-03-cctp-path.md](./phase-03-cctp-path.md) |
-| 4 | UI (payment page, merchant dashboard) | Pending | 8h | [phase-04-ui.md](./phase-04-ui.md) |
-| 5 | Contract Deployment (Deploy.s.sol, forge broadcast) | Pending | 3h | [phase-05-deploy.md](./phase-05-deploy.md) |
+| 1 | Foundation (smoke test, fetchSpotPrice, updateSession, route refactor) | Complete | 5h | [phase-01](./phase-01-foundation.md) |
+| 2 | ADMIN_RELAY Path (pollSwapCompleted, adminRelay transfer, balance check) | Complete | 4h | [phase-02-admin-relay.md](./phase-02-admin-relay.md) |
+| 3 | CCTP Path (extractMessageHash, receiveMessage, extractRawMessage) | Complete | 4h | [phase-03-cctp-path.md](./phase-03-cctp-path.md) |
+| 4 | UI (payment page, merchant dashboard) | Complete | 8h | [phase-04-ui.md](./phase-04-ui.md) |
+| 5 | Contract Deployment (Deploy.s.sol, forge broadcast) | Complete | 3h | [phase-05-deploy.md](./phase-05-deploy.md) |
 
 ## Execution Strategy
 

@@ -1,6 +1,6 @@
 # Phase 2 — ADMIN_RELAY Path
 
-**Priority:** P0 | **Status:** Pending | **Effort:** ~4h
+**Priority:** P0 | **Status:** Complete | **Effort:** ~4h
 **Blocks:** Working demo (guaranteed path regardless of CCTP result)
 **Blocked by:** Phase 1
 

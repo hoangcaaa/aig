@@ -1,6 +1,6 @@
 # Phase 5 — Contract Deployment
 
-**Priority:** P0 | **Status:** Pending | **Effort:** ~3h
+**Priority:** P0 | **Status:** Complete | **Effort:** ~3h
 **Blocked by:** Phase 1 (env vars must be set), Phase 2 or 3 (BRIDGE_MODE determined)
 
 ## Context Links

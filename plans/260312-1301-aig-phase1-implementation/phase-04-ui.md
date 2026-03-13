@@ -1,6 +1,6 @@
 # Phase 4 — UI (Payment Page + Merchant Dashboard)
 
-**Priority:** P0 | **Status:** Pending | **Effort:** ~8h
+**Priority:** P0 | **Status:** Complete | **Effort:** ~8h
 **Can run in parallel with:** Phase 2 and Phase 3
 **Blocked by:** Phase 1 (quote endpoint must exist for payment page)
 
