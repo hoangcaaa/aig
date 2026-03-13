@@ -23,6 +23,12 @@ build/
 
 # Claude Code (local tooling — not project code)
 .claude/
+CLAUDE.md
+
+# Sensitive project docs (keep local only)
+AGENTS.md
+PRD final.md
+PRD*.md
 
 # Foundry
 contracts/cache/
