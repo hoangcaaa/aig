@@ -12,6 +12,8 @@ import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { PaymentFeedTable } from "@/components/payment-feed-table";
+import { DashboardStatCards } from "@/components/dashboard-stat-cards";
+import type { DashboardStats } from "@/lib/merchant";
 
 interface PointsData {
   totalPoints: number;
@@ -32,16 +34,27 @@ export default function DashboardPage() {
 
   const [targetUSDC, setTargetUSDC] = useState<number>(10);
   const [points, setPoints] = useState<PointsData | null>(null);
+  const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
 
-  // Fetch points balance when wallet connects
+  // Fetch points + dashboard stats when wallet connects
   useEffect(() => {
     if (!address) return;
+
     fetch(`/api/points?wallet=${address}`)
       .then((r) => r.json())
       .then((data) => {
         if (!data.error) setPoints(data);
       })
       .catch(() => null);
+
+    fetch(`/api/dashboard?wallet=${address}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.error) setDashStats(data.stats);
+      })
+      .catch(() => null)
+      .finally(() => setStatsLoading(false));
   }, [address]);
 
   if (!isConnected) {
@@ -79,6 +92,15 @@ export default function DashboardPage() {
             Disconnect
           </button>
         </div>
+
+        {/* Analytics Stats */}
+        <DashboardStatCards
+          totalRevenue={dashStats?.totalRevenue ?? 0}
+          transactionCount={dashStats?.transactionCount ?? 0}
+          successRate={dashStats?.successRate ?? 0}
+          recentVolume={dashStats?.recentVolume ?? 0}
+          loading={statsLoading}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* QR Generator */}
