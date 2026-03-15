@@ -21,13 +21,15 @@ aig_project/
 │   │   ├── fee-breakdown-card.tsx        # Quote display component
 │   │   ├── payment-progress-bar.tsx      # SSE-driven progress steps
 │   │   ├── qr-code-generator.tsx         # QR code + refresh logic
-│   │   └── payment-feed-table.tsx        # Real-time transaction table
+│   │   ├── payment-feed-table.tsx        # Real-time transaction table
+│   │   └── dashboard-stat-cards.tsx      # Analytics stats: revenue, transactions, success rate, volume
 │   ├── lib/
 │   │   ├── agent.ts                      # fetchSpotPrice, updateSessionStatus, calculateSwapParams
 │   │   ├── chains.ts                     # getArcChain() Arc Testnet definition
 │   │   ├── mock-bridge.ts                # pollSwapCompleted, adminRelay, verifyAdminWalletBalance
 │   │   ├── cctp.ts                       # extractMessageHash, receiveMessage, extractRawMessage, pollAttestation
-│   │   └── points.ts                     # awardPoints, getPointsBalance
+│   │   ├── points.ts                     # awardPoints, getPointsBalance
+│   │   └── merchant.ts                   # upsertMerchant, getMerchantStats
 │   ├── tsconfig.json                     # ES2020, strict mode
 │   ├── package.json                      # viem, wagmi, react-query, supabase, qrcode.react deps
 │   └── .env.example                      # All env vars documented
@@ -108,6 +110,11 @@ aig_project/
 - `getPointsBalance(wallet)` — returns { totalPoints, tier }
 - Trigger on confirmed payments
 
+**frontend/lib/merchant.ts**
+- `upsertMerchant(walletAddress, businessName)` — creates or updates merchant profile in merchants table
+- `getMerchantStats(walletAddress)` — returns analytics stats (totalRevenue, transactionCount, successRate, recentVolume)
+- Queries payment_sessions filtered by merchant_wallet + status='CONFIRMED'
+
 ### API Routes
 
 **frontend/app/api/agent/quote/route.ts**
@@ -124,6 +131,12 @@ aig_project/
 **frontend/app/api/points/route.ts**
 - `GET /api/points?wallet=0x...`
 - Returns: { totalPoints, tier }
+
+**frontend/app/api/dashboard/route.ts**
+- `GET /api/dashboard?wallet=0x...`
+- Returns: { merchantProfile, analyticsStats }
+- merchantProfile: { wallet, businessName, createdAt }
+- analyticsStats: { totalRevenue, transactionCount, successRate, recentVolume }
 
 ### UI Pages
 
@@ -142,6 +155,8 @@ aig_project/
 **frontend/app/dashboard/page.tsx**
 - `'use client'` — client-side only
 - Wagmi connect button
+- Display merchant profile (business name from /api/dashboard)
+- DashboardStatCards with analytics data (total revenue, transactions, success rate, recent volume)
 - QRCodeGenerator with 60s refresh
 - Supabase real-time subscription to payment_sessions
 - Points balance via `/api/points`

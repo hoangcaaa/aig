@@ -107,6 +107,14 @@ Flow:
 - Returns: `{ totalPoints, tier }`
 - Reads from Supabase points_balance table
 
+**GET /api/dashboard**
+- Query param: `?wallet=0x...`
+- Returns: Merchant profile + analytics stats
+  - `merchantProfile`: { wallet, businessName, createdAt }
+  - `analyticsStats`: { totalRevenue, transactionCount, successRate, recentVolume }
+- Reads from merchants + payment_sessions tables
+- Filters payment_sessions by merchant_wallet, status='CONFIRMED'
+
 ### 3. Database Schema (Supabase)
 
 **payment_sessions**
@@ -115,11 +123,20 @@ id              uuid pk default gen_random_uuid()
 session_id      text unique not null
 status          text default 'PENDING'
 bridge_mode     text                        -- 'CCTP' | 'ADMIN_RELAY'
-merchant_wallet text
+merchant_wallet text fk → merchants.wallet_address
+customer_wallet text
 target_usdc     numeric
 swap_params     jsonb                       -- cached SwapParams
 created_at      timestamptz default now()
 updated_at      timestamptz default now()
+```
+
+**merchants**
+```sql
+id              uuid pk default gen_random_uuid()
+wallet_address  text unique not null       -- merchant's Arc Testnet wallet
+business_name   text                       -- merchant business name
+created_at      timestamptz default now()
 ```
 
 **points_ledger**
@@ -163,6 +180,8 @@ last_updated    timestamptz default now()
 
 **Dashboard (/dashboard/page.tsx)**
 - Wagmi connect button
+- Merchant profile section with business name
+- DashboardStatCards: real-time analytics (total revenue, transaction count, success rate, recent volume)
 - QRCodeGenerator (60s refresh)
 - Supabase real-time subscription to payment_sessions
 - PaymentFeedTable display
@@ -173,6 +192,7 @@ last_updated    timestamptz default now()
 - `payment-progress-bar.tsx` — SSE-driven steps (idle → swap_executing → bridging → confirmed)
 - `qr-code-generator.tsx` — QRCodeSVG + refresh timer
 - `payment-feed-table.tsx` — table of confirmed transactions
+- `dashboard-stat-cards.tsx` — 4 analytics cards: total revenue, transaction count, success rate, recent volume
 
 ### 5. Bridge Modes
 

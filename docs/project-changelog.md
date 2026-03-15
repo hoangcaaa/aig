@@ -2,6 +2,24 @@
 
 All significant changes, features, and fixes documented here.
 
+## [Phase 1 MVP - Analytics Update] — 2026-03-15
+
+### New Features
+
+**Merchant Analytics**
+- New Supabase migration: `003_create_merchants_table.sql` — creates merchants table (id, wallet_address, business_name, created_at)
+- Added `customer_wallet` column to payment_sessions for transaction tracking
+- New API endpoint: `GET /api/dashboard?wallet=0x...` — returns merchant profile + analytics stats
+  - merchantProfile: wallet, businessName, createdAt
+  - analyticsStats: totalRevenue, transactionCount, successRate, recentVolume
+- New library: `frontend/lib/merchant.ts`
+  - `upsertMerchant()` — creates/updates merchant profile
+  - `getMerchantStats()` — calculates real-time analytics from payment_sessions
+- New component: `frontend/components/dashboard-stat-cards.tsx` — displays 4 analytics stat cards
+- Enhanced dashboard page to show merchant profile + real analytics data
+
+---
+
 ## [Phase 1 MVP] — 2026-03-13
 
 ### Implementation Complete
