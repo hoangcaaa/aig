@@ -6,7 +6,7 @@
 // Data: Supabase via /api/dashboard + /api/points, real-time feed in table
 // =============================================================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { QRCodeGenerator } from "@/components/qr-code-generator";
@@ -32,6 +32,8 @@ export default function DashboardPage() {
 
   const [mounted, setMounted] = useState(false);
   const [targetUSDC] = useState<number>(50);
+  const [qrKey, setQrKey] = useState(0);
+  const qrCardRef = useRef<HTMLDivElement>(null);
   const [points, setPoints] = useState<PointsData | null>(null);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -102,8 +104,14 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex flex-row items-center gap-3">
-            {/* Generate QR button */}
-            <button className="bg-[#FF8400] rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[#111111] hover:opacity-90 transition-opacity whitespace-nowrap">
+            {/* Generate QR button — scrolls to QR card and regenerates */}
+            <button
+              onClick={() => {
+                setQrKey((k) => k + 1);
+                qrCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              className="bg-[#FF8400] rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[#111111] hover:opacity-90 transition-opacity whitespace-nowrap"
+            >
               Generate QR
             </button>
             {/* Export button */}
@@ -148,7 +156,7 @@ export default function DashboardPage() {
           <div className="w-[340px] flex flex-col gap-6">
 
             {/* QR Code Card */}
-            <div className={cardClass}>
+            <div ref={qrCardRef} className={cardClass}>
               {/* QR card header */}
               <div className="flex flex-col gap-1 px-6 py-4 border-b border-[#CBCCC9]">
                 <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[#111111]">
@@ -161,7 +169,7 @@ export default function DashboardPage() {
               {/* QR card body */}
               <div className="px-6 py-6 flex flex-col items-center">
                 {address && (
-                  <QRCodeGenerator merchantWallet={address} targetUSDC={targetUSDC} />
+                  <QRCodeGenerator key={qrKey} merchantWallet={address} targetUSDC={targetUSDC} />
                 )}
               </div>
             </div>
