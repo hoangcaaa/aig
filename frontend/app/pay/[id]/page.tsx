@@ -13,7 +13,7 @@
 //   6. On "confirmed" → show receipt
 // =============================================================================
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAccount, useConnect, useWriteContract } from "wagmi";
 import { injected } from "wagmi/connectors";
@@ -48,7 +48,19 @@ interface QuoteResponse {
   spotPriceUSDCPerBNB: number;
 }
 
-export default function PaymentPage() {
+export default function PaymentPageWrapper() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-400 text-sm">Loading payment...</p>
+      </main>
+    }>
+      <PaymentPage />
+    </Suspense>
+  );
+}
+
+function PaymentPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const sessionId = params.id as string;

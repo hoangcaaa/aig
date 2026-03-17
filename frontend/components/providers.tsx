@@ -12,16 +12,19 @@ import { bscTestnet } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { injected } from "wagmi/connectors";
 
-const wagmiConfig = createConfig({
-  chains: [bscTestnet],
-  connectors: [injected()],
-  transports: {
-    [bscTestnet.id]: http(process.env.NEXT_PUBLIC_BSC_TESTNET_RPC_URL),
-  },
-});
+// Use public BSC Testnet RPC as fallback
+const bscRpc = process.env.NEXT_PUBLIC_BSC_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545";
 
 export function Providers({ children }: { children: ReactNode }) {
-  // Stable QueryClient per session — avoids re-creation on re-renders
+  // Stable configs per session — avoids re-creation on re-renders
+  // wagmiConfig created inside component to avoid SSR connector issues
+  const [wagmiConfig] = useState(() =>
+    createConfig({
+      chains: [bscTestnet],
+      connectors: [injected()],
+      transports: { [bscTestnet.id]: http(bscRpc) },
+    })
+  );
   const [queryClient] = useState(() => new QueryClient());
 
   return (

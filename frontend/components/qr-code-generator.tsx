@@ -63,8 +63,12 @@ export function QRCodeGenerator({ merchantWallet, targetUSDC, baseUrl }: QRCodeG
   const origin = typeof window !== "undefined" ? window.location.origin : (baseUrl ?? "");
   const payUrl = `${origin}/pay/${payload.sessionId}?merchant=${encodeURIComponent(merchantWallet)}&amount=${targetUSDC}`;
 
+  // Use fixed format to avoid hydration mismatch (toLocaleTimeString differs server/client)
   const expiryDate = new Date(payload.expiry * 1000);
-  const expiryStr = expiryDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const hh = String(expiryDate.getHours()).padStart(2, "0");
+  const mm = String(expiryDate.getMinutes()).padStart(2, "0");
+  const ss = String(expiryDate.getSeconds()).padStart(2, "0");
+  const expiryStr = `${hh}:${mm}:${ss}`;
 
   return (
     <div className="flex flex-col items-center gap-4">
