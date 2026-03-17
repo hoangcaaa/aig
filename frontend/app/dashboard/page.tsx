@@ -1,10 +1,9 @@
 "use client";
 
 // =============================================================================
-// /app/dashboard/page.tsx — Merchant Dashboard
-// PRD F-010: QR generator, real-time payment feed, points balance
-//
-// Minimum viable Phase 1: no auth — merchant identified by connected wallet.
+// /app/dashboard/page.tsx — Merchant Dashboard, Pencil design
+// Layout: Header | Metrics Row | (Recent Payments | QR + Points columns)
+// Data: Supabase via /api/dashboard + /api/points, real-time feed in table
 // =============================================================================
 
 import { useState, useEffect } from "react";
@@ -13,6 +12,7 @@ import { injected } from "wagmi/connectors";
 import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { PaymentFeedTable } from "@/components/payment-feed-table";
 import { DashboardStatCards } from "@/components/dashboard-stat-cards";
+import { PointsTierCard } from "@/components/points-tier-card";
 import type { DashboardStats } from "@/lib/merchant";
 
 interface PointsData {
@@ -21,51 +21,62 @@ interface PointsData {
   lastActivity: string | null;
 }
 
-const TIER_COLORS: Record<string, string> = {
-  Builder: "text-blue-600 bg-blue-50",
-  Architect: "text-purple-600 bg-purple-50",
-  Sovereign: "text-amber-600 bg-amber-50",
-};
+// Shared card style used for all content cards
+const cardClass =
+  "bg-white border border-[#CBCCC9] shadow-[0_1px_1.75px_0_#0000000d]";
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
   const { connect } = useConnect();
   const { disconnect } = useDisconnect();
 
-  const [targetUSDC, setTargetUSDC] = useState<number>(10);
+  const [mounted, setMounted] = useState(false);
+  const [targetUSDC] = useState<number>(50);
   const [points, setPoints] = useState<PointsData | null>(null);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // Fetch points + dashboard stats when wallet connects
+  // Prevent hydration mismatch: wagmi state differs server vs client
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (!address) return;
 
     fetch(`/api/points?wallet=${address}`)
       .then((r) => r.json())
-      .then((data) => {
-        if (!data.error) setPoints(data);
-      })
+      .then((data) => { if (!data.error) setPoints(data); })
       .catch(() => null);
 
     fetch(`/api/dashboard?wallet=${address}`)
       .then((r) => r.json())
-      .then((data) => {
-        if (!data.error) setDashStats(data.stats);
-      })
+      .then((data) => { if (!data.error) setDashStats(data.stats); })
       .catch(() => null)
       .finally(() => setStatsLoading(false));
   }, [address]);
 
+  // SSR placeholder — render nothing until client hydrates
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-[#F2F3F0] flex items-center justify-center">
+        <p className="text-[#666666] text-sm">Loading...</p>
+      </main>
+    );
+  }
+
+  // ── Not connected: wallet connect screen ─────────────────────────────────
   if (!isConnected) {
     return (
-      <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="text-center space-y-4 max-w-sm w-full">
-          <h1 className="text-3xl font-bold text-gray-900">Merchant Dashboard</h1>
-          <p className="text-gray-500">Connect your wallet to access your dashboard.</p>
+      <main className="min-h-screen bg-[#F2F3F0] flex flex-col items-center justify-center p-4">
+        <div className="text-center flex flex-col items-center gap-4 max-w-sm w-full">
+          <h1 className="font-[family-name:var(--font-jetbrains-mono)] text-[28px] font-semibold text-[#111111] tracking-[-1px]">
+            Dashboard
+          </h1>
+          <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[#666666]">
+            Connect your wallet to access your merchant dashboard.
+          </p>
           <button
             onClick={() => connect({ connector: injected() })}
-            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+            className="bg-[#FF8400] rounded-full h-10 px-6 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[#111111] hover:opacity-90 transition-opacity"
           >
             Connect Wallet
           </button>
@@ -74,98 +85,95 @@ export default function DashboardPage() {
     );
   }
 
+  // ── Connected: full Pencil layout ─────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Merchant Dashboard</h1>
-            <p className="text-sm text-gray-500 font-mono mt-0.5">
-              {address?.slice(0, 6)}…{address?.slice(-4)}
+    <main className="min-h-screen bg-[#F2F3F0]" style={{ padding: "32px 40px" }}>
+      <div className="flex flex-col gap-7">
+
+        {/* ── 1. Page Header ─────────────────────────────────────────────── */}
+        <div className="flex flex-row items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 className="font-[family-name:var(--font-jetbrains-mono)] text-[28px] font-semibold text-[#111111] tracking-[-1px] leading-none">
+              Dashboard
+            </h1>
+            <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[#666666]">
+              Welcome back. Here&apos;s your payment overview.
             </p>
           </div>
-          <button
-            onClick={() => disconnect()}
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            Disconnect
-          </button>
+
+          <div className="flex flex-row items-center gap-3">
+            {/* Generate QR button */}
+            <button className="bg-[#FF8400] rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[#111111] hover:opacity-90 transition-opacity whitespace-nowrap">
+              Generate QR
+            </button>
+            {/* Export button */}
+            <button className="bg-[#F2F3F0] border border-[#CBCCC9] shadow-sm rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[#111111] hover:bg-white transition-colors whitespace-nowrap">
+              Export
+            </button>
+            {/* Disconnect (small secondary) */}
+            <button
+              onClick={() => disconnect()}
+              className="font-[family-name:var(--font-geist-sans)] text-xs text-[#666666] hover:text-[#111111] transition-colors ml-2"
+            >
+              {address?.slice(0, 6)}&hellip;{address?.slice(-4)} &middot; Disconnect
+            </button>
+          </div>
         </div>
 
-        {/* Analytics Stats */}
+        {/* ── 2. Metrics Row ──────────────────────────────────────────────── */}
         <DashboardStatCards
           totalRevenue={dashStats?.totalRevenue ?? 0}
           transactionCount={dashStats?.transactionCount ?? 0}
-          successRate={dashStats?.successRate ?? 0}
-          recentVolume={dashStats?.recentVolume ?? 0}
+          pointsBalance={points?.totalPoints ?? 0}
+          tier={points?.tier ?? "Builder"}
           loading={statsLoading}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* QR Generator */}
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">Accept Payment</h2>
-            <div className="flex items-center gap-2 mb-4">
-              <label className="text-sm text-gray-600">Amount (USDC):</label>
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={targetUSDC}
-                onChange={(e) => setTargetUSDC(parseFloat(e.target.value) || 0)}
-                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-24 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+        {/* ── 3. Content Columns ──────────────────────────────────────────── */}
+        <div className="flex flex-row gap-6">
+
+          {/* Left: Recent Payments table */}
+          <div className={`flex-1 flex flex-col ${cardClass}`}>
+            {/* Table header */}
+            <div className="flex flex-row items-center justify-between px-6 py-4 border-b border-[#CBCCC9]">
+              <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[#111111]">
+                Recent Payments
+              </span>
             </div>
-            {targetUSDC > 0 && address && (
-              <QRCodeGenerator merchantWallet={address} targetUSDC={targetUSDC} />
-            )}
+            {/* Table body */}
+            <PaymentFeedTable merchantWallet={address ?? ""} />
           </div>
 
-          {/* Points */}
-          <div className="bg-white rounded-2xl shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">ARC Points</h2>
-            {points ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm">Total Points</span>
-                  <span className="text-2xl font-bold text-gray-900">
-                    {points.totalPoints.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 text-sm">Tier</span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      TIER_COLORS[points.tier] ?? "text-gray-600 bg-gray-50"
-                    }`}
-                  >
-                    {points.tier}
-                  </span>
-                </div>
-                {points.lastActivity && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 text-sm">Last Activity</span>
-                    <span className="text-sm text-gray-500">
-                      {new Date(points.lastActivity).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-                <div className="mt-3 bg-gray-50 rounded-xl p-3 text-xs text-gray-500">
-                  Builder → Architect: 500 pts · Architect → Sovereign: 5,000 pts
-                </div>
+          {/* Right column: QR card + Points card */}
+          <div className="w-[340px] flex flex-col gap-6">
+
+            {/* QR Code Card */}
+            <div className={cardClass}>
+              {/* QR card header */}
+              <div className="flex flex-col gap-1 px-6 py-4 border-b border-[#CBCCC9]">
+                <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[#111111]">
+                  Payment QR Code
+                </span>
+                <span className="font-[family-name:var(--font-geist-sans)] text-xs text-[#666666]">
+                  Share with customers to receive payments
+                </span>
               </div>
-            ) : (
-              <p className="text-sm text-gray-400">Loading points...</p>
-            )}
+              {/* QR card body */}
+              <div className="px-6 py-6 flex flex-col items-center">
+                {address && (
+                  <QRCodeGenerator merchantWallet={address} targetUSDC={targetUSDC} />
+                )}
+              </div>
+            </div>
+
+            {/* Points & Tier Card */}
+            <PointsTierCard
+              totalPoints={points?.totalPoints ?? 0}
+              tier={points?.tier ?? "Builder"}
+            />
           </div>
         </div>
 
-        {/* Payment Feed */}
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Payment History</h2>
-          <PaymentFeedTable merchantWallet={address ?? ""} />
-        </div>
       </div>
     </main>
   );

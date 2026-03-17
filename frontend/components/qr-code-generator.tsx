@@ -1,9 +1,9 @@
 "use client";
 
 // =============================================================================
-// qr-code-generator.tsx — QR code with 60s auto-refresh
-// Encodes payment session data so customers can scan to open /pay/[id]
-// PRD F-003: QR code generation
+// qr-code-generator.tsx — QR code card body, Pencil design
+// 180x180 QR placeholder, amount, session ID, expiry text
+// 60s auto-refresh preserved from original implementation
 // =============================================================================
 
 import { useEffect, useState } from "react";
@@ -12,7 +12,7 @@ import { QRCodeSVG } from "qrcode.react";
 interface QRCodeGeneratorProps {
   merchantWallet: string;
   targetUSDC: number;
-  baseUrl?: string; // defaults to window.location.origin
+  baseUrl?: string;
 }
 
 interface QRPayload {
@@ -23,7 +23,6 @@ interface QRPayload {
 }
 
 function generateSessionId(): string {
-  // Random hex session ID (32 bytes)
   return Array.from(crypto.getRandomValues(new Uint8Array(32)))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
@@ -43,18 +42,17 @@ export function QRCodeGenerator({ merchantWallet, targetUSDC, baseUrl }: QRCodeG
     setCountdown(60);
   }
 
-  // Initial generation
   useEffect(() => {
     refresh();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchantWallet, targetUSDC]);
 
-  // Auto-refresh every 60s
   useEffect(() => {
     const interval = setInterval(refresh, 60_000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [merchantWallet, targetUSDC]);
 
-  // Countdown ticker
   useEffect(() => {
     const tick = setInterval(() => setCountdown((n) => Math.max(0, n - 1)), 1_000);
     return () => clearInterval(tick);
@@ -65,23 +63,38 @@ export function QRCodeGenerator({ merchantWallet, targetUSDC, baseUrl }: QRCodeG
   const origin = typeof window !== "undefined" ? window.location.origin : (baseUrl ?? "");
   const payUrl = `${origin}/pay/${payload.sessionId}?merchant=${encodeURIComponent(merchantWallet)}&amount=${targetUSDC}`;
 
+  const expiryDate = new Date(payload.expiry * 1000);
+  const expiryStr = expiryDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="bg-white p-4 rounded-2xl shadow-md">
-        <QRCodeSVG value={payUrl} size={220} />
+    <div className="flex flex-col items-center gap-4">
+      {/* QR code — 180x180 container matching Pencil spec */}
+      <div className="w-[180px] h-[180px] bg-[#F2F3F0] border border-[#CBCCC9] rounded flex items-center justify-center">
+        <QRCodeSVG value={payUrl} size={156} />
       </div>
-      <p className="text-xs text-gray-500">
-        Refreshes in <span className="font-semibold text-gray-700">{countdown}s</span>
+
+      {/* Amount */}
+      <p className="font-[family-name:var(--font-jetbrains-mono)] text-xl font-semibold text-[#111111] text-center">
+        ${targetUSDC.toFixed(2)} USDC
       </p>
+
+      {/* Session ID */}
+      <p className="font-[family-name:var(--font-jetbrains-mono)] text-[11px] text-[#666666] text-center">
+        {payload.sessionId.slice(0, 16)}...
+      </p>
+
+      {/* Expiry */}
+      <p className="font-[family-name:var(--font-geist-sans)] text-[11px] text-[#666666] text-center">
+        Expires at {expiryStr} &middot; {countdown}s remaining
+      </p>
+
+      {/* Refresh link */}
       <button
         onClick={refresh}
-        className="text-xs text-blue-600 hover:underline"
+        className="font-[family-name:var(--font-geist-sans)] text-xs text-[#804200] hover:underline"
       >
         Refresh now
       </button>
-      <p className="text-xs text-gray-400 font-mono break-all text-center max-w-xs">
-        Session: {payload.sessionId.slice(0, 16)}...
-      </p>
     </div>
   );
 }

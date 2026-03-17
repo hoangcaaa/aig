@@ -124,6 +124,7 @@ contract SwapRouter {
             tokenOut: usdc,
             fee: poolFee,
             recipient: address(this),
+            deadline: block.timestamp + 300, // 5 min deadline
             amountOut: grossUSDCRequired,
             amountInMaximum: amountInMaximum,
             sqrtPriceLimitX96: 0

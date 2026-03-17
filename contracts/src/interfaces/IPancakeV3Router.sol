@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// PancakeSwap V3 SwapRouter — exactOutputSingle interface only (Phase 1)
+// PancakeSwap V3 SmartRouter — exactOutputSingle with deadline (BSC Testnet)
 interface IPancakeV3Router {
     struct ExactOutputSingleParams {
         address tokenIn;
         address tokenOut;
         uint24  fee;
         address recipient;
+        uint256 deadline;
         uint256 amountOut;
         uint256 amountInMaximum;
         uint160 sqrtPriceLimitX96;

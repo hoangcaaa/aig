@@ -1,9 +1,9 @@
 "use client";
 
 // =============================================================================
-// payment-feed-table.tsx — Real-time payment feed for merchant dashboard
-// Subscribes to Supabase payment_sessions filtered by merchant wallet
-// PRD F-010: payment feed
+// payment-feed-table.tsx — Real-time payment feed, Pencil design layout
+// Columns: Source | Token | USDC Received | Status | Time
+// Real-time Supabase subscription preserved from original implementation
 // =============================================================================
 
 import { useEffect, useState } from "react";
@@ -30,24 +30,62 @@ function getSupabaseClient() {
   );
 }
 
-function statusBadge(status: string) {
-  const colors: Record<string, string> = {
-    CONFIRMED: "bg-green-100 text-green-700",
-    PENDING: "bg-yellow-100 text-yellow-700",
-    SWAP_EXECUTING: "bg-blue-100 text-blue-700",
-    BRIDGING: "bg-purple-100 text-purple-700",
-    BRIDGE_DELAYED: "bg-orange-100 text-orange-700",
-    EXPIRED: "bg-gray-100 text-gray-500",
-    REFUNDED: "bg-red-100 text-red-600",
-  };
+// Relative time helper: "2 min ago", "1 hour ago", "3 days ago"
+function relativeTime(isoString: string): string {
+  const diffMs = Date.now() - new Date(isoString).getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} hour${diffHr !== 1 ? "s" : ""} ago`;
+  const diffDays = Math.floor(diffHr / 24);
+  return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+}
+
+// Map bridge_mode → Source label
+function sourceLabel(bridgeMode: string | null): string {
+  if (!bridgeMode) return "BSC Testnet";
+  return "BSC Testnet";
+}
+
+// Map bridge_mode → Token label
+function tokenLabel(bridgeMode: string | null): string {
+  if (bridgeMode === "CCTP") return "USDC";
+  if (bridgeMode === "ADMIN_RELAY") return "tBNB";
+  return "USDC";
+}
+
+// Status badge styling per Pencil design
+const STATUS_STYLES: Record<string, string> = {
+  CONFIRMED: "bg-[#DFE6E1] text-[#004D1A]",
+  PENDING: "bg-[#FFF3E0] text-[#804200]",
+  BRIDGING: "bg-[#E8EAF6] text-[#1A237E]",
+  EXPIRED: "bg-[#F2F3F0] text-[#666666]",
+  REFUNDED: "bg-[#FCE4EC] text-[#B71C1C]",
+  SWAP_EXECUTING: "bg-[#E8EAF6] text-[#1A237E]",
+  BRIDGE_DELAYED: "bg-[#FFF3E0] text-[#804200]",
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const style = STATUS_STYLES[status] ?? "bg-[#F2F3F0] text-[#666666]";
   return (
     <span
-      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-        colors[status] ?? "bg-gray-100 text-gray-600"
-      }`}
+      className={`inline-flex items-center rounded-full px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-sm leading-none ${style}`}
     >
       {status}
     </span>
+  );
+}
+
+// Column header cell
+function ColHeader({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div
+      className={`px-3 py-3 font-[family-name:var(--font-jetbrains-mono)] text-xs font-semibold text-[#666666] tracking-wider uppercase ${className}`}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -99,7 +137,7 @@ export function PaymentFeedTable({ merchantWallet }: PaymentFeedTableProps) {
 
   if (rows.length === 0) {
     return (
-      <p className="text-sm text-gray-400 text-center py-8">
+      <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[#666666] text-center py-10">
         No payments yet. Share your QR code to receive your first payment.
       </p>
     );
@@ -107,34 +145,45 @@ export function PaymentFeedTable({ merchantWallet }: PaymentFeedTableProps) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm text-left">
-        <thead>
-          <tr className="border-b border-gray-100 text-gray-500 text-xs uppercase">
-            <th className="py-2 pr-4">Session</th>
-            <th className="py-2 pr-4">Amount</th>
-            <th className="py-2 pr-4">Status</th>
-            <th className="py-2 pr-4">Bridge</th>
-            <th className="py-2">Time</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-50">
-          {rows.map((row) => (
-            <tr key={row.id} className="hover:bg-gray-50">
-              <td className="py-2 pr-4 font-mono text-xs text-gray-500">
-                {row.session_id.slice(0, 12)}...
-              </td>
-              <td className="py-2 pr-4 font-medium">
-                {row.target_usdc != null ? `$${row.target_usdc.toFixed(2)}` : "—"}
-              </td>
-              <td className="py-2 pr-4">{statusBadge(row.status)}</td>
-              <td className="py-2 pr-4 text-gray-500">{row.bridge_mode ?? "—"}</td>
-              <td className="py-2 text-gray-400 text-xs">
-                {new Date(row.updated_at).toLocaleTimeString()}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Table header row */}
+      <div className="flex flex-row bg-[#F2F3F0]">
+        <ColHeader className="w-[140px]">Source</ColHeader>
+        <ColHeader className="flex-1">Token</ColHeader>
+        <ColHeader className="w-[140px]">USDC Received</ColHeader>
+        <ColHeader className="w-[120px]">Status</ColHeader>
+        <ColHeader className="w-[140px]">Time</ColHeader>
+      </div>
+
+      {/* Data rows */}
+      {rows.map((row) => (
+        <div
+          key={row.id}
+          className="flex flex-row border-b border-[#CBCCC9] hover:bg-[#F2F3F0]/50 transition-colors"
+        >
+          {/* Source */}
+          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-geist-sans)] text-[13px] text-[#111111]">
+            {sourceLabel(row.bridge_mode)}
+          </div>
+          {/* Token */}
+          <div className="flex-1 px-3 py-3 font-[family-name:var(--font-geist-sans)] text-[13px] font-medium text-[#111111]">
+            {tokenLabel(row.bridge_mode)}
+          </div>
+          {/* USDC Received */}
+          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-medium text-[#111111]">
+            {row.target_usdc != null
+              ? `$${Number(row.target_usdc).toFixed(2)}`
+              : "—"}
+          </div>
+          {/* Status */}
+          <div className="w-[120px] px-3 py-3 flex items-center">
+            <StatusBadge status={row.status} />
+          </div>
+          {/* Time */}
+          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-geist-sans)] text-xs text-[#666666]">
+            {relativeTime(row.updated_at)}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

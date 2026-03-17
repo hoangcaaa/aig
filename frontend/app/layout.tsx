@@ -1,33 +1,24 @@
-"use client";
-
 // =============================================================================
-// layout.tsx — Root layout with Wagmi + TanStack Query providers
-// Wagmi v2 requires QueryClientProvider as a peer dependency
+// layout.tsx — Root layout (server component)
+// Fonts: Geist (body), JetBrains Mono (headings/values)
+// Providers live in a separate client component to avoid hydration issues
 // =============================================================================
 
-import { WagmiProvider, createConfig, http } from "wagmi";
-import { bscTestnet } from "wagmi/chains";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { injected } from "wagmi/connectors";
+import { JetBrains_Mono } from "next/font/google";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const wagmiConfig = createConfig({
-  chains: [bscTestnet],
-  connectors: [injected()],
-  transports: {
-    [bscTestnet.id]: http(process.env.NEXT_PUBLIC_BSC_TESTNET_RPC_URL),
-  },
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
 });
-
-const queryClient = new QueryClient();
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={jetbrainsMono.variable}>
       <body className="antialiased">
-        <WagmiProvider config={wagmiConfig}>
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        </WagmiProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
