@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
-  // Silence monorepo lockfile warning on Vercel
+  // Resolve monorepo root for Turbopack (must be absolute on Vercel)
   turbopack: {
-    root: "..",
+    root: path.resolve(__dirname, ".."),
   },
 };
 
