@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Silence monorepo lockfile warning on Vercel
+  turbopack: {
+    root: "..",
+  },
 };
 
 export default nextConfig;
