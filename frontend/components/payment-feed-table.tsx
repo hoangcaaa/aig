@@ -24,10 +24,10 @@ interface PaymentFeedTableProps {
 }
 
 function getSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
 }
 
 // Relative time helper: "2 min ago", "1 hour ago", "3 days ago"
@@ -95,6 +95,7 @@ export function PaymentFeedTable({ merchantWallet }: PaymentFeedTableProps) {
   useEffect(() => {
     if (!merchantWallet) return;
     const supabase = getSupabaseClient();
+    if (!supabase) return;
 
     // Initial load
     supabase
