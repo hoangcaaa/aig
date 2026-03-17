@@ -37,12 +37,15 @@ export default function DashboardPage() {
   const [points, setPoints] = useState<PointsData | null>(null);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   // Prevent hydration mismatch: wagmi state differs server vs client
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!address) return;
+    setApiError(null);
+    setStatsLoading(true);
 
     fetch(`/api/points?wallet=${address}`)
       .then((r) => r.json())
@@ -51,8 +54,14 @@ export default function DashboardPage() {
 
     fetch(`/api/dashboard?wallet=${address}`)
       .then((r) => r.json())
-      .then((data) => { if (!data.error) setDashStats(data.stats); })
-      .catch(() => null)
+      .then((data) => {
+        if (data.error) {
+          setApiError(data.error);
+        } else {
+          setDashStats(data.stats);
+        }
+      })
+      .catch((e) => setApiError(e.message ?? "Failed to load dashboard"))
       .finally(() => setStatsLoading(false));
   }, [address]);
 
@@ -127,6 +136,21 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* ── API Error Banner ───────────────────────────────────────────── */}
+        {apiError && (
+          <div className="bg-[#FFF3E0] border border-[#FFCC80] rounded px-4 py-3 flex items-center justify-between">
+            <span className="font-[family-name:var(--font-geist-sans)] text-sm text-[#804200]">
+              Unable to load dashboard data. Services may be initializing.
+            </span>
+            <button
+              onClick={() => window.location.reload()}
+              className="font-[family-name:var(--font-jetbrains-mono)] text-xs text-[#804200] hover:underline ml-4 whitespace-nowrap"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* ── 2. Metrics Row ──────────────────────────────────────────────── */}
         <DashboardStatCards

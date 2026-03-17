@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const result = await getPointsBalance(wallet);
     return Response.json(result);
   } catch (err) {
+    console.error("[API /points] Error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return Response.json({ error: message }, { status: 500 });
   }

@@ -23,6 +23,7 @@ export async function GET(req: NextRequest) {
 
     return Response.json({ merchant, stats });
   } catch (err) {
+    console.error("[API /dashboard] Error:", err);
     const message = err instanceof Error ? err.message : "Unknown error";
     return Response.json({ error: message }, { status: 500 });
   }
